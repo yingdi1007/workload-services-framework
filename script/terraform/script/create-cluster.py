@@ -73,6 +73,7 @@ inventories = {
   },
 }
 bastion_hosts = {}
+ssh_private_key_file = os.path.abspath("ssh_access.key") if os.path.exists("ssh_access.key") else ""
 for host in instances:
   if "private_ip" not in instances[host]:
     continue
@@ -87,6 +88,9 @@ for host in instances:
     "ansible_user": instances[host].get("ansible_user", instances[host].get("user_name",os.environ["TF_USER"])),
     "ansible_port": instances[host].get("ansible_port", instances[host].get("ssh_port", 22)),
   })
+  if ssh_private_key_file and inventories[vm_group]["hosts"][host].get("ansible_connection", "ssh") == "ssh":
+    inventories[vm_group]["hosts"][host]["ansible_private_key_file"] = ssh_private_key_file
+    inventories[vm_group]["hosts"][host]["ansible_ssh_private_key_file"] = ssh_private_key_file
   if vm_group == "controller":
     inventories["cluster_hosts"]["hosts"][host] = inventories[vm_group]["hosts"][host]
   if "bastion_host" in instances[host]:

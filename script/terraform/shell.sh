@@ -9,6 +9,21 @@ SDIR="$( cd "$( dirname "$0" )" &> /dev/null && pwd )"
 cloud=${1:-static}
 shift
 
+map_path_into_container() {
+    local path="$1"
+    if [ -z "$path" ]; then
+        return 0
+    fi
+    case "$path" in
+        "$HOME"/*)
+            printf '/home/%s\n' "${path#"$HOME"/}"
+            ;;
+        *)
+            printf '%s\n' "$path"
+            ;;
+    esac
+}
+
 options=()
 while [ "$1" != "--" ]; do
     options+=("$1")
@@ -66,4 +81,10 @@ for d in .gitconfig .docker .ssh .netrc; do
 done
 
 terraform_image="${TERRAFORM_REGISTRY:-$REGISTRY}terraform-${cloud}${TERRAFORM_RELEASE:-$RELEASE}"
+if [ -n "${WSF_SSH_PRIVATE_KEY_FILE:-}" ]; then
+    options+=("-e" "WSF_SSH_PRIVATE_KEY_FILE=$(map_path_into_container "$WSF_SSH_PRIVATE_KEY_FILE")")
+fi
+if [ -n "${WSF_SSH_PUBLIC_KEY_FILE:-}" ]; then
+    options+=("-e" "WSF_SSH_PUBLIC_KEY_FILE=$(map_path_into_container "$WSF_SSH_PUBLIC_KEY_FILE")")
+fi
 docker run "${options[@]}" -e TERRAFORM_IMAGE=$terraform_image $terraform_image "$@"

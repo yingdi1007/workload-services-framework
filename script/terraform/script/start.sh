@@ -218,11 +218,20 @@ if [[ "$stages" = *"--stage=provision"* ]]; then
         fi
     done
     
-    # Create SG white list
-    if [ ${#tf_pathes[@]} -ge 1 ]; then
+    # Prepare SSH access material for remote/static SUTs.
+    if [ ${#tf_pathes[@]} -ge 1 ] || [ -n "${WSF_SSH_PRIVATE_KEY_FILE:-}${WSF_SSH_PUBLIC_KEY_FILE:-}" ]; then
         "$DIR"/get-ip-list.sh /opt/project/script/csp/opt/etc/proxy-ip-list.txt > proxy-ip-list.txt
-        # Create key pair
-        ssh-keygen -t rsa -m PEM -q $keyfile -N ''
+        # Reuse a user-provided key when present; otherwise generate a throwaway pair.
+        if [ -n "${WSF_SSH_PRIVATE_KEY_FILE:-}" ]; then
+            cp -f --preserve=mode "$WSF_SSH_PRIVATE_KEY_FILE" ssh_access.key
+            if [ -n "${WSF_SSH_PUBLIC_KEY_FILE:-}" ]; then
+                cp -f --preserve=mode "$WSF_SSH_PUBLIC_KEY_FILE" ssh_access.key.pub
+            else
+                ssh-keygen -y -f ssh_access.key > ssh_access.key.pub
+            fi
+        else
+            ssh-keygen -t rsa -m PEM -q $keyfile -N ''
+        fi
     fi
 
     # provision VMs

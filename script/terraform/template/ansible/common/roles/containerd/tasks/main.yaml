@@ -75,8 +75,8 @@
   - name: Configure sandbox_image
     lineinfile:
       path: "{{ containerd_config_toml }}"
-      regexp: '^(\s*)sandbox_image\s*=\s*".*(/.*)"'
-      line: '\1sandbox_image = "{{ containerd_pause_registry }}{% if ":" not in containerd_pause_registry %}\2{% endif %}"'
+      regexp: "^(\\s*)(sandbox_image|sandbox)\\s*=\\s*['\\\"].*(/.*)['\\\"]"
+      line: '\1\2 = "{{ containerd_pause_registry }}{% if ":" not in containerd_pause_registry %}\3{% endif %}"'
       backrefs: true
     when: containerd_pause_registry not in (containerd_config2.stdout | default(containerd_config1.stdout | default('')))
     become: true
@@ -183,5 +183,4 @@
   vars:
     containerd_registry_mirrors_list: "{% if containerd_registry_mirrors | type_debug == 'list' %}{{ containerd_registry_mirrors }}{% else %}{{ containerd_registry_mirrors | default('',true) | split(',') | reject('==','') }}{% endif %}"
     containerd_insecure_registries_list: "{% if containerd_insecure_registries | type_debug == 'list' %}{{ containerd_insecure_registries }}{% else %}{{ containerd_insecure_registries | default('',true) | split(',') | reject('==','') }}{% endif %}"
-
 

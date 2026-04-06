@@ -17,6 +17,7 @@ build {
         users = split(",", var.user_name)
         ports = split(",", var.ssh_port)
         connections = [for u in split(",", var.public_ip): u!="127.0.0.1"?"ssh":"local"]
+        private_key_file = abspath(var.ssh_localhost_pri_key_file)
       })),
       "ANSIBLE_CONFIG=${dirname(abspath(var.ansible_playbook))}/ansible.cfg ansible-playbook -i /tmp/inventory-packer.yaml -e image_name=${var.image_name} -vv ${var.ansible_playbook}",
     ]

@@ -203,7 +203,17 @@ fi
 trap destroy SIGINT SIGKILL ERR EXIT
 
 cd /opt/workspace/template/packer/$CSP/$PROJECT_NAME
-ssh-keygen -t rsa -m PEM -q -f ssh_access.key -N ''
+if [ -n "${WSF_SSH_PRIVATE_KEY_FILE:-}" ]; then
+    echo "Reusing existing SSH private key: $WSF_SSH_PRIVATE_KEY_FILE"
+    cp -f --preserve=mode "$WSF_SSH_PRIVATE_KEY_FILE" ssh_access.key
+    if [ -n "${WSF_SSH_PUBLIC_KEY_FILE:-}" ]; then
+        cp -f --preserve=mode "$WSF_SSH_PUBLIC_KEY_FILE" ssh_access.key.pub
+    else
+        ssh-keygen -y -f ssh_access.key > ssh_access.key.pub
+    fi
+else
+    ssh-keygen -t rsa -m PEM -q -f ssh_access.key -N ''
+fi
 if [ "$CSP" = "static" ] && [ "$PUBLIC_IP" = "127.0.0.1" ]; then
     echo "AuthorizedKeysFile $(readlink -e ssh_access.key.pub)" | sudo tee -a /etc/ssh/sshd_config
     sudo service ssh start
